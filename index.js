@@ -3,11 +3,14 @@ var canvas = document.getElementById('canvas'),
   center,
   camera,
   ship,
-  planets;
+  planets,
+  startTime;
 
 var initialize = function() {
   canvas.setAttribute("width", window.innerWidth);
   canvas.setAttribute("height", window.innerHeight);
+
+  startTime = Date.now();
 
   center = {
     x: canvas.width / 2,
@@ -15,10 +18,6 @@ var initialize = function() {
   };
 
   if (!ship) {
-    camera = {
-      x: 0,
-      y: 0,
-    };
 
     ship = {
       x: canvas.width / 2,
@@ -28,7 +27,12 @@ var initialize = function() {
       r: 0,
       d: 0,
       v: 0,
-      t: 0.06
+      t: 0.1
+    };
+
+    camera = {
+      x: ship.x - canvas.width / 2,
+      y: ship.y - canvas.height / 2,
     };
 
     var PLANET_COUNT = 1000;
@@ -96,10 +100,11 @@ var updateShip = function(dt) {
   // if (ship.y > canvas.height) ship.y = 0;
 
   //Camera movement
-  if (ship.x < canvas.width * 0.30) camera.x += dx;
-  if (ship.y < canvas.height * 0.30) camera.y += dy;
-  if (ship.x > canvas.width * 0.70) camera.x += dx;
-  if (ship.y > canvas.height * 0.70) camera.y += dy;
+  var cameraBuffer = 1;
+  if (ship.x < canvas.width * cameraBuffer) camera.x += dx;
+  if (ship.y < canvas.height * cameraBuffer) camera.y += dy;
+  if (ship.x > canvas.width * 1 - cameraBuffer) camera.x += dx;
+  if (ship.y > canvas.height * 1 - cameraBuffer) camera.y += dy;
 
 }
 
@@ -147,6 +152,8 @@ var draw = function(time) {
 
   drawPlanets();
   drawShip();
+  drawHud();
+
   // drawDirection();
 
   requestAnimationFrame(draw);
@@ -207,6 +214,21 @@ var drawPlanet = function(x, y, r, color) {
   ctx.beginPath();
   ctx.arc(x - camera.x, y - camera.y, r, 10, 80);
   ctx.fill();
+}
+
+var drawHud = function() {
+  var score = 'Time: ' + ((Date.now() - startTime) / 1000).toFixed(0),
+    x = 5,
+    y = 20,
+    color = '#FF11FF';
+
+  ctx.font = '18px sans-serif'
+
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+
+  ctx.strokeText(score, x, y);
+  ctx.fillText(score, x, y);
 }
 
 
