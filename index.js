@@ -193,7 +193,8 @@ var drawStars = function() {
     star = stars[i];
 
     opacity = STAR_SIZE / star.r;
-    color = 'rgba(255,255,255,' + opacity + ')';
+    // color = 'rgba(255,255,255,' + opacity + ')';
+    color = 'white';
 
     drawPlanet(star.x, star.y, star.r, color);
   }
