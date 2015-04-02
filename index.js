@@ -52,17 +52,26 @@ window.onresize = initialize;
 var updateShip = function(dt) {
   if (ship.left) ship.r -= 0.003 * dt;
   if (ship.right) ship.r += 0.003 * dt;
-  ship.d = ship.r;
+  // ship.d = ship.r;
   if (ship.thrust) {
-    ship.v += ship.t * dt;
+    // ship.v += ship.t * dt;
+    var rx = Math.sin(ship.r) * ship.t;
+    var ry = -Math.cos(ship.r) * ship.t;
+    ship.v += Math.sqrt(Math.pow(rx, 2) + Math.pow(ry, 2));
+    ship.d = Math.atan((ry) / (rx));
+    ship.x += rx;
+    ship.y += ry;
+    console.log(ship.v);
   } else if (ship.down) {
-    ship.v -= ship.t * dt;
+    // ship.v -= ship.t * dt;
   } else {
-    ship.v -= 0.002 * dt;
-    if (ship.v < 0) ship.v = 0;
+    // ship.v -= 0.002 * dt;
+    // if (ship.v < 0) ship.v = 0;
   }
   var dx = Math.sin(ship.d) * ship.v;
   var dy = -Math.cos(ship.d) * ship.v;
+  // ship.d = Math.atan((dy + ry) / (dx + rx));
+
   ship.x += dx;
   ship.y += dy;
 
@@ -80,7 +89,7 @@ var updateShip = function(dt) {
   if (ship.x < canvas.width * 0.30) camera.x += dx;
   if (ship.y < canvas.height * 0.30) camera.y += dy;
   if (ship.x > canvas.width * 0.70) camera.x += dx;
-  if (ship.y > canvas.height * 0.70) camera.y += dy;
+  if (shipop.y > canvas.height * 0.70) camera.y += dy;
 
 }
 
