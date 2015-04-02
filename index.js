@@ -28,7 +28,7 @@ var initialize = function() {
       r: 0,
       d: 0,
       v: 0,
-      t: 0.003
+      t: 0.06
     };
 
     var PLANET_COUNT = 1000;
@@ -52,44 +52,54 @@ window.onresize = initialize;
 var updateShip = function(dt) {
   if (ship.left) ship.r -= 0.003 * dt;
   if (ship.right) ship.r += 0.003 * dt;
-  // ship.d = ship.r;
-  if (ship.thrust) {
-    // ship.v += ship.t * dt;
-    var rx = Math.sin(ship.r) * ship.t;
-    var ry = -Math.cos(ship.r) * ship.t;
-    ship.v += Math.sqrt(Math.pow(rx, 2) + Math.pow(ry, 2));
-    ship.d = Math.atan((ry) / (rx));
-    ship.x += rx;
-    ship.y += ry;
-    console.log(ship.v);
-  } else if (ship.down) {
-    // ship.v -= ship.t * dt;
-  } else {
-    // ship.v -= 0.002 * dt;
-    // if (ship.v < 0) ship.v = 0;
-  }
-  var dx = Math.sin(ship.d) * ship.v;
-  var dy = -Math.cos(ship.d) * ship.v;
-  // ship.d = Math.atan((dy + ry) / (dx + rx));
 
-  ship.x += dx;
-  ship.y += dy;
+  if (ship.r > Math.PI * 2) ship.r -= Math.PI * 2;
+  if (ship.r < 0) ship.r += Math.PI * 2;
+
+  var startPos = {
+    x: ship.x,
+    y: ship.y
+  };
+
+  ship.x += Math.sin(ship.d) * ship.v;
+  ship.y += -Math.cos(ship.d) * ship.v;
+  var dx = ship.x - startPos.x;
+  var dy = ship.y - startPos.y;
+
+  if (ship.thrust) {
+    ship.x += Math.sin(ship.r) * ship.t;
+    ship.y += -Math.cos(ship.r) * ship.t;
+
+    dx = ship.x - startPos.x;
+    dy = ship.y - startPos.y;
+
+    if (dy < 0) {
+      ship.d = -Math.atan(dx / dy);
+    } else if (dx > 0) {
+      ship.d = Math.atan(dy / dx) + Math.PI / 2;
+    } else if (dx < 0) {
+      ship.d = Math.atan(dy / dx) + Math.PI * 1.5;
+    }
+    ship.v = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
+    // if (ship.v > 4) ship.v = 4;
+  }
 
   if (detectCollide()) {
     ship = null;
     initialize();
   };
 
-
+  //Wrap border
   // if (ship.x < 0) ship.x = canvas.width;
   // if (ship.y < 0) ship.y = canvas.height;
   // if (ship.x > canvas.width) ship.x = 0;
   // if (ship.y > canvas.height) ship.y = 0;
 
+  //Camera movement
   if (ship.x < canvas.width * 0.30) camera.x += dx;
   if (ship.y < canvas.height * 0.30) camera.y += dy;
   if (ship.x > canvas.width * 0.70) camera.x += dx;
-  if (shipop.y > canvas.height * 0.70) camera.y += dy;
+  if (ship.y > canvas.height * 0.70) camera.y += dy;
 
 }
 
@@ -137,6 +147,7 @@ var draw = function(time) {
 
   drawPlanets();
   drawShip();
+  // drawDirection();
 
   requestAnimationFrame(draw);
 }
@@ -173,6 +184,21 @@ var drawShip = function() {
     ctx.lineTo(0 - ship.w / 4, 0 + ship.h / 2);
     ctx.fill();
   }
+  ctx.restore();
+}
+
+var drawDirection = function() {
+  ctx.fillStyle = '#afa';
+  ctx.strokeStyle = '#FFFFFF';
+  // ctx.strokeRect(ship.x - ship.w / 2, ship.y - ship.h / 2, ship.w, ship.h);
+  ctx.save();
+  ctx.translate(ship.x - camera.x, ship.y - camera.y);
+  ctx.rotate(ship.d);
+  ctx.beginPath();
+  ctx.moveTo(0, 0 - ship.v * 10);
+  ctx.lineTo(0 + ship.w / 4, 0 + ship.h / 2);
+  ctx.lineTo(0 - ship.w / 4, 0 + ship.h / 2);
+  ctx.fill();
   ctx.restore();
 }
 
