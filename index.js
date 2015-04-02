@@ -4,7 +4,14 @@ var canvas = document.getElementById('canvas'),
   camera,
   ship,
   planets,
+  stars,
   startTime;
+
+var PLANET_COUNT = 1000,
+  PLANET_AREA = 10000,
+  PLANET_SIZE = 80,
+  STAR_COUNT = 4000,
+  STAR_SIZE = 1;
 
 var initialize = function() {
   canvas.setAttribute("width", window.innerWidth);
@@ -35,9 +42,6 @@ var initialize = function() {
       y: ship.y - canvas.height / 2,
     };
 
-    var PLANET_COUNT = 1000;
-    var PLANET_AREA = 10000;
-    var PLANET_SIZE = 80;
     planets = Array(PLANET_COUNT);
     for (var i = 0; i < planets.length; i++) {
       planets[i] = {
@@ -45,6 +49,15 @@ var initialize = function() {
         y: Math.random() * PLANET_AREA - PLANET_AREA / 2,
         r: Math.random() * PLANET_SIZE + 20,
         home: i === planets.length - 1
+      }
+    }
+
+    stars = Array(STAR_COUNT);
+    for (var i = 0; i < stars.length; i++) {
+      stars[i] = {
+        x: Math.random() * PLANET_AREA - PLANET_AREA / 2,
+        y: Math.random() * PLANET_AREA - PLANET_AREA / 2,
+        r: Math.random() * STAR_SIZE + 1
       }
     }
   }
@@ -114,6 +127,7 @@ var inPlanet = function(planet, x, y) {
     x > planet.x - planet.r &&
     y < planet.y + planet.r &&
     y > planet.y - planet.r &&
+    planet.r > 50 &&
     true
   ) {
     return true;
@@ -150,6 +164,7 @@ var draw = function(time) {
 
   updateShip(dt);
 
+  drawStars();
   drawPlanets();
   drawShip();
   drawHud();
@@ -166,7 +181,21 @@ var drawPlanets = function() {
     planet = planets[i];
     color = planet.home ? '#0a0' : '#a00';
 
+    if (planet.r < 50) color = 'rgba(255,0,0,0.3)';
+
     drawPlanet(planet.x, planet.y, planet.r, color);
+  }
+}
+
+var drawStars = function() {
+  var star, color, opacity;
+  for (var i = 0; i < stars.length; i++) {
+    star = stars[i];
+
+    opacity = STAR_SIZE / star.r;
+    color = 'rgba(255,255,255,' + opacity + ')';
+
+    drawPlanet(star.x, star.y, star.r, color);
   }
 }
 
