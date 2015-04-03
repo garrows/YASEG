@@ -8,9 +8,14 @@ var canvas = document.getElementById('canvas'),
   startTime;
 
 var PLANET_COUNT = 1000,
+  // var PLANET_COUNT = 1,
   PLANET_AREA = 10000,
+  // PLANET_AREA = 100,
   PLANET_SIZE = 80,
+  // PLANET_BACKGROUND_SIZE = 50,
+  PLANET_BACKGROUND_SIZE = 0,
   STAR_COUNT = 4000,
+  // STAR_COUNT = 40,
   STAR_SIZE = 1;
 
 var initialize = function() {
@@ -34,7 +39,8 @@ var initialize = function() {
       r: 0,
       d: 0,
       v: 0,
-      t: 0.1
+      t: 0.1,
+      mass: 100
     };
 
     camera = {
@@ -44,10 +50,12 @@ var initialize = function() {
 
     planets = Array(PLANET_COUNT);
     for (var i = 0; i < planets.length; i++) {
+      var radius = Math.random() * PLANET_SIZE + 20;
       planets[i] = {
         x: Math.random() * PLANET_AREA - PLANET_AREA / 2,
         y: Math.random() * PLANET_AREA - PLANET_AREA / 2,
-        r: Math.random() * PLANET_SIZE + 20,
+        r: radius,
+        mass: radius * 300,
         home: i === planets.length - 1
       }
     }
@@ -101,6 +109,36 @@ var updateShip = function(dt) {
     // if (ship.v > 4) ship.v = 4;
   }
 
+  var planet;
+  for (var i = 0; i < planets.length; i++) {
+    planet = planets[i];
+
+    var distance = Math.sqrt(Math.pow(planet.x - ship.x, 2) + Math.pow(planet.y - ship.y, 2));
+    if (distance < canvas.width) {
+      var pdx = ship.x - planet.x;
+      var pdy = ship.y - planet.y;
+
+      var direction;
+      if (pdy < 0) {
+        direction = -Math.atan(pdx / pdy);
+      } else if (pdx > 0) {
+        direction = Math.atan(pdy / pdx) + Math.PI / 2;
+      } else if (pdx < 0) {
+        direction = Math.atan(pdy / pdx) + Math.PI * 1.5;
+      }
+      direction -= Math.PI;
+      // console.log(direction / Math.PI * 180);
+      var gravitationalForce = (ship.mass + planet.mass) / Math.pow(distance, 2);
+      ship.x += Math.sin(direction) * gravitationalForce * dt / 10;
+      ship.y += -Math.cos(direction) * gravitationalForce * dt / 10;
+
+    }
+    // ship.x += Math.sin(ship.r) * ship.t;
+    // ship.y += -Math.cos(ship.r) * ship.t;
+
+
+  }
+
   if (detectCollide()) {
     ship = null;
     initialize();
@@ -114,10 +152,14 @@ var updateShip = function(dt) {
 
   //Camera movement
   var cameraBuffer = 1;
-  if (ship.x < canvas.width * cameraBuffer) camera.x += dx;
-  if (ship.y < canvas.height * cameraBuffer) camera.y += dy;
-  if (ship.x > canvas.width * 1 - cameraBuffer) camera.x += dx;
-  if (ship.y > canvas.height * 1 - cameraBuffer) camera.y += dy;
+  dx = ship.x - startPos.x;
+  dy = ship.y - startPos.y;
+  camera.x = ship.x - canvas.width / 2;
+  camera.y = ship.y - canvas.height / 2;
+  // if (ship.x < canvas.width * cameraBuffer) camera.x += dx;
+  // if (ship.y < canvas.height * cameraBuffer) camera.y += dy;
+  // if (ship.x > canvas.width * 1 - cameraBuffer) camera.x += dx;
+  // if (ship.y > canvas.height * 1 - cameraBuffer) camera.y += dy;
 
 }
 
@@ -127,7 +169,7 @@ var inPlanet = function(planet, x, y) {
     x > planet.x - planet.r &&
     y < planet.y + planet.r &&
     y > planet.y - planet.r &&
-    planet.r > 50 &&
+    planet.r > PLANET_BACKGROUND_SIZE &&
     true
   ) {
     return true;
@@ -181,7 +223,7 @@ var drawPlanets = function() {
     planet = planets[i];
     color = planet.home ? '#0a0' : '#a00';
 
-    if (planet.r < 50) color = 'rgba(255,0,0,0.3)';
+    if (planet.r < PLANET_BACKGROUND_SIZE) color = 'rgba(255,0,0,0.3)';
 
     drawPlanet(planet.x, planet.y, planet.r, color);
   }
