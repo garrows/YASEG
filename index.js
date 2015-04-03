@@ -7,15 +7,21 @@ var canvas = document.getElementById('canvas'),
   stars,
   startTime;
 
-var PLANET_COUNT = 1000,
-  // var PLANET_COUNT = 1,
+
+// var PLANET_COUNT = 1,
+//   PLANET_AREA = 100,
+//   PLANET_SIZE = 80,
+//   PLANET_BACKGROUND_SIZE = 0,
+//   STAR_COUNT = 40,
+//   STAR_SIZE = 1;
+
+var PLANET_COUNT = 200,
   PLANET_AREA = 10000,
-  // PLANET_AREA = 100,
   PLANET_SIZE = 80,
   // PLANET_BACKGROUND_SIZE = 50,
   PLANET_BACKGROUND_SIZE = 0,
+  PLANET_DENSITY_COEFFICIENT = 10,
   STAR_COUNT = 4000,
-  // STAR_COUNT = 40,
   STAR_SIZE = 1;
 
 var initialize = function() {
@@ -39,7 +45,7 @@ var initialize = function() {
       r: 0,
       d: 0,
       v: 0,
-      t: 0.1,
+      t: 0.2,
       mass: 100
     };
 
@@ -55,7 +61,7 @@ var initialize = function() {
         x: Math.random() * PLANET_AREA - PLANET_AREA / 2,
         y: Math.random() * PLANET_AREA - PLANET_AREA / 2,
         r: radius,
-        mass: radius * 300,
+        mass: radius * PLANET_DENSITY_COEFFICIENT,
         home: i === planets.length - 1
       }
     }
@@ -75,38 +81,31 @@ window.onresize = initialize;
 
 
 var updateShip = function(dt) {
+  var dx, dy;
+
+  //Steering
   if (ship.left) ship.r -= 0.003 * dt;
   if (ship.right) ship.r += 0.003 * dt;
 
+  //Clip rotation
   if (ship.r > Math.PI * 2) ship.r -= Math.PI * 2;
   if (ship.r < 0) ship.r += Math.PI * 2;
+  if (ship.d > Math.PI * 2) ship.d -= Math.PI * 2;
+  if (ship.d < 0) ship.d += Math.PI * 2;
 
   var startPos = {
     x: ship.x,
     y: ship.y
   };
 
+  //Apply momentum TODO: add mass & dt
   ship.x += Math.sin(ship.d) * ship.v;
   ship.y += -Math.cos(ship.d) * ship.v;
-  var dx = ship.x - startPos.x;
-  var dy = ship.y - startPos.y;
 
   if (ship.thrust) {
+    //Apply thrust TODO: add mass & dt
     ship.x += Math.sin(ship.r) * ship.t;
     ship.y += -Math.cos(ship.r) * ship.t;
-
-    dx = ship.x - startPos.x;
-    dy = ship.y - startPos.y;
-
-    if (dy < 0) {
-      ship.d = -Math.atan(dx / dy);
-    } else if (dx > 0) {
-      ship.d = Math.atan(dy / dx) + Math.PI / 2;
-    } else if (dx < 0) {
-      ship.d = Math.atan(dy / dx) + Math.PI * 1.5;
-    }
-    ship.v = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
-    // if (ship.v > 4) ship.v = 4;
   }
 
   var planet;
@@ -127,17 +126,27 @@ var updateShip = function(dt) {
         direction = Math.atan(pdy / pdx) + Math.PI * 1.5;
       }
       direction -= Math.PI;
-      // console.log(direction / Math.PI * 180);
+
       var gravitationalForce = (ship.mass + planet.mass) / Math.pow(distance, 2);
       ship.x += Math.sin(direction) * gravitationalForce * dt / 10;
       ship.y += -Math.cos(direction) * gravitationalForce * dt / 10;
 
     }
-    // ship.x += Math.sin(ship.r) * ship.t;
-    // ship.y += -Math.cos(ship.r) * ship.t;
-
-
   }
+
+  //Calculate change of direction.
+  dx = ship.x - startPos.x;
+  dy = ship.y - startPos.y;
+  if (dy < 0) {
+    ship.d = -Math.atan(dx / dy);
+  } else if (dx > 0) {
+    ship.d = Math.atan(dy / dx) + Math.PI / 2;
+  } else if (dx < 0) {
+    ship.d = Math.atan(dy / dx) + Math.PI * 1.5;
+  }
+  //Calculate velocity
+  ship.v = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
+
 
   if (detectCollide()) {
     ship = null;
@@ -151,11 +160,9 @@ var updateShip = function(dt) {
   // if (ship.y > canvas.height) ship.y = 0;
 
   //Camera movement
-  var cameraBuffer = 1;
-  dx = ship.x - startPos.x;
-  dy = ship.y - startPos.y;
   camera.x = ship.x - canvas.width / 2;
   camera.y = ship.y - canvas.height / 2;
+  // var cameraBuffer = 1;
   // if (ship.x < canvas.width * cameraBuffer) camera.x += dx;
   // if (ship.y < canvas.height * cameraBuffer) camera.y += dy;
   // if (ship.x > canvas.width * 1 - cameraBuffer) camera.x += dx;
