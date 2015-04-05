@@ -5,6 +5,7 @@ var canvas = document.getElementById('canvas'),
   ship,
   planets,
   stars,
+  level = 1,
   startTime;
 
 
@@ -183,12 +184,23 @@ var detectCollide = function() {
   var planet;
   for (var i = 0; i < planets.length; i++) {
     planet = planets[i];
-    if (inPlanet(planet, ship.x, ship.y)) return true;
+    if (inPlanet(planet, ship.x, ship.y)) {
+      if (i === planets.length - 1) {
+        levelUp();
+      }
+      return true;
+    }
     // if (inPlanet(planet, ship.x, ship.y + ship.h / 2)) return true;
     // if (inPlanet(planet, ship.x + ship.w / 2, ship.y - ship.h / 2)) return true;
     // if (inPlanet(planet, ship.x + ship.w / 2, ship.y - ship.h / 2)) return true;
   }
   return false;
+}
+
+var levelUp = function() {
+  level++;
+  PLANET_AREA = Math.floor(PLANET_AREA * 1.20);
+  PLANET_COUNT = Math.floor(PLANET_COUNT * 1.20);
 }
 
 
@@ -292,8 +304,10 @@ var drawPlanet = function(x, y, r, color) {
 
 var drawHud = function() {
   var score = 'Time: ' + ((Date.now() - startTime) / 1000).toFixed(0),
+    levelString = 'Level: ' + level,
     x = 5,
     y = 20,
+    textHeight = 30,
     color = '#FF11FF';
 
   ctx.font = '18px sans-serif'
@@ -301,8 +315,10 @@ var drawHud = function() {
   ctx.strokeStyle = color;
   ctx.fillStyle = color;
 
-  ctx.strokeText(score, x, y);
-  ctx.fillText(score, x, y);
+  ctx.strokeText(levelString, x, y);
+  ctx.fillText(levelString, x, y);
+  ctx.strokeText(score, x, y + textHeight);
+  ctx.fillText(score, x, y + textHeight);
 
   //Draw trajectory
   drawHudArrow(ship.d, ship.v, MAX_VELOCITY_HUD, '#faa');
