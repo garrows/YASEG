@@ -22,7 +22,9 @@ var PLANET_COUNT = 200,
   PLANET_BACKGROUND_SIZE = 0,
   PLANET_DENSITY_COEFFICIENT = 10,
   STAR_COUNT = 4000,
-  STAR_SIZE = 1;
+  STAR_SIZE = 1,
+  MAX_VELOCITY_HUD = 30,
+  MAX_TARGET_DISTANCE_HUD = PLANET_AREA / 2;
 
 var initialize = function() {
   canvas.setAttribute("width", window.innerWidth);
@@ -135,17 +137,9 @@ var updateShip = function(dt) {
   }
 
   //Calculate change of direction.
-  dx = ship.x - startPos.x;
-  dy = ship.y - startPos.y;
-  if (dy < 0) {
-    ship.d = -Math.atan(dx / dy);
-  } else if (dx > 0) {
-    ship.d = Math.atan(dy / dx) + Math.PI / 2;
-  } else if (dx < 0) {
-    ship.d = Math.atan(dy / dx) + Math.PI * 1.5;
-  }
-  //Calculate velocity
-  ship.v = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
+  var vector = getVector(startPos, ship);
+  ship.d = vector.angle;
+  ship.v = vector.distance;
 
 
   if (detectCollide()) {
@@ -218,8 +212,6 @@ var draw = function(time) {
   drawShip();
   drawHud();
 
-  // drawDirection();
-
   requestAnimationFrame(draw);
 }
 
@@ -273,17 +265,20 @@ var drawShip = function() {
   ctx.restore();
 }
 
-var drawDirection = function() {
-  ctx.fillStyle = '#afa';
-  ctx.strokeStyle = '#FFFFFF';
-  // ctx.strokeRect(ship.x - ship.w / 2, ship.y - ship.h / 2, ship.w, ship.h);
+
+var drawHudArrow = function(direction, distance, max, color) {
+  ctx.fillStyle = color;
   ctx.save();
   ctx.translate(ship.x - camera.x, ship.y - camera.y);
-  ctx.rotate(ship.d);
+  ctx.rotate(direction);
   ctx.beginPath();
-  ctx.moveTo(0, 0 - ship.v * 10);
-  ctx.lineTo(0 + ship.w / 4, 0 + ship.h / 2);
-  ctx.lineTo(0 - ship.w / 4, 0 + ship.h / 2);
+  var r = -30,
+    w = 2,
+    percent = distance / max,
+    d = percent * 100;
+  ctx.moveTo(0, r - d);
+  ctx.lineTo(0 + w, r);
+  ctx.lineTo(0 - w, r);
   ctx.fill();
   ctx.restore();
 }
@@ -308,6 +303,31 @@ var drawHud = function() {
 
   ctx.strokeText(score, x, y);
   ctx.fillText(score, x, y);
+
+  //Draw trajectory
+  drawHudArrow(ship.d, ship.v, MAX_VELOCITY_HUD, '#faa');
+  //Draw target
+  var vector = getVector(ship, planets[planets.length - 1]);
+  drawHudArrow(vector.angle, vector.distance, MAX_TARGET_DISTANCE_HUD, '#afa');
+}
+
+var getVector = function(source, target) {
+  var vector = {
+    x: target.x - source.x,
+    y: target.y - source.y,
+    angle: 0,
+    distance: 0
+  };
+  if (vector.y < 0) {
+    vector.angle = -Math.atan(vector.x / vector.y);
+  } else if (vector.x > 0) {
+    vector.angle = Math.atan(vector.y / vector.x) + Math.PI / 2;
+  } else if (vector.x < 0) {
+    vector.angle = Math.atan(vector.y / vector.x) + Math.PI * 1.5;
+  }
+  //Calculate velocity
+  vector.distance = Math.sqrt(Math.pow(vector.x, 2) + Math.pow(vector.y, 2));
+  return vector;
 }
 
 
