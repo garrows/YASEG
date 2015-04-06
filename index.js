@@ -8,14 +8,6 @@ var canvas = document.getElementById('canvas'),
   level = 1,
   startTime;
 
-
-// var PLANET_COUNT = 1,
-//   PLANET_AREA = 100,
-//   PLANET_SIZE = 80,
-//   PLANET_BACKGROUND_SIZE = 0,
-//   STAR_COUNT = 40,
-//   STAR_SIZE = 1;
-
 var PLANET_COUNT = 200,
   PLANET_AREA = 10000,
   PLANET_SIZE = 80,
@@ -48,15 +40,19 @@ var initialize = function() {
       r: 0,
       d: 0,
       v: 0,
-      t: 0.2,
+      thrust: 0.2,
+      sidewaysThrust: 0.003,
       mass: 100
     };
+    ship.backHypotenuse = Math.sqrt(Math.pow(ship.h / 2, 2) + Math.pow(ship.w / 2, 2));
+    ship.backAngle = Math.atan((ship.w / 2) / (ship.h / 2));
 
     camera = {
       x: ship.x - canvas.width / 2,
       y: ship.y - canvas.height / 2,
     };
 
+    //Generate planets
     planets = Array(PLANET_COUNT);
     for (var i = 0; i < planets.length; i++) {
       var radius = Math.random() * PLANET_SIZE + 20;
@@ -68,6 +64,19 @@ var initialize = function() {
         home: i === planets.length - 1
       }
     }
+
+    //Test planet
+    // planets = Array(1);
+    // var radius = ship.h;
+    // planets[0] = {
+    //   // x: ship.x,
+    //   // y: ship.y + (radius + ship.h / 2 + 2),
+    //   x: ship.x + (radius + ship.h / 2 - 0.1),
+    //   y: ship.y,
+    //   r: radius,
+    //   mass: radius * PLANET_DENSITY_COEFFICIENT,
+    //   home: false
+    // }
 
     stars = Array(STAR_COUNT);
     for (var i = 0; i < stars.length; i++) {
@@ -87,8 +96,8 @@ var updateShip = function(dt) {
   var dx, dy;
 
   //Steering
-  if (ship.left) ship.r -= 0.003 * dt;
-  if (ship.right) ship.r += 0.003 * dt;
+  if (ship.left) ship.r -= ship.sidewaysThrust * dt;
+  if (ship.right) ship.r += ship.sidewaysThrust * dt;
 
   //Clip rotation
   if (ship.r > Math.PI * 2) ship.r -= Math.PI * 2;
@@ -105,10 +114,10 @@ var updateShip = function(dt) {
   ship.x += Math.sin(ship.d) * ship.v;
   ship.y += -Math.cos(ship.d) * ship.v;
 
-  if (ship.thrust) {
+  if (ship.thrusting) {
     //Apply thrust TODO: add mass & dt
-    ship.x += Math.sin(ship.r) * ship.t;
-    ship.y += -Math.cos(ship.r) * ship.t;
+    ship.x += Math.sin(ship.r) * ship.thrust;
+    ship.y += -Math.cos(ship.r) * ship.thrust;
   }
 
   var planet;
@@ -182,17 +191,34 @@ var inPlanet = function(planet, x, y) {
 
 var detectCollide = function() {
   var planet;
+  var top = {
+    x: ship.x + Math.sin(ship.r) * ship.h / 2,
+    y: ship.y - Math.cos(ship.r) * ship.h / 2,
+  }
+
+  var bottomRight = {
+    x: ship.x + Math.sin(ship.r + Math.PI - ship.backAngle) * ship.backHypotenuse,
+    y: ship.y - Math.cos(ship.r + Math.PI - ship.backAngle) * ship.backHypotenuse,
+  }
+  var bottomLeft = {
+    x: ship.x + Math.sin(ship.r + Math.PI + ship.backAngle) * ship.backHypotenuse,
+    y: ship.y - Math.cos(ship.r + Math.PI + ship.backAngle) * ship.backHypotenuse,
+  }
+
+
   for (var i = 0; i < planets.length; i++) {
     planet = planets[i];
-    if (inPlanet(planet, ship.x, ship.y)) {
+    if (
+      inPlanet(planet, top.x, top.y) ||
+      inPlanet(planet, bottomRight.x, bottomRight.y) ||
+      inPlanet(planet, bottomLeft.x, bottomLeft.y)
+    ) {
       if (i === planets.length - 1) {
         levelUp();
       }
       return true;
     }
-    // if (inPlanet(planet, ship.x, ship.y + ship.h / 2)) return true;
-    // if (inPlanet(planet, ship.x + ship.w / 2, ship.y - ship.h / 2)) return true;
-    // if (inPlanet(planet, ship.x + ship.w / 2, ship.y - ship.h / 2)) return true;
+
   }
   return false;
 }
@@ -266,7 +292,7 @@ var drawShip = function() {
   ctx.lineTo(0 + ship.w / 2, 0 + ship.h / 2);
   ctx.lineTo(0 - ship.w / 2, 0 + ship.h / 2);
   ctx.fill();
-  if (ship.thrust) {
+  if (ship.thrusting) {
     ctx.beginPath();
     ctx.fillStyle = '#faa';
     ctx.moveTo(0 + ship.w / 4, 0 + ship.h / 2);
@@ -297,6 +323,7 @@ var drawHudArrow = function(direction, distance, max, color) {
 
 var drawPlanet = function(x, y, r, color) {
   ctx.fillStyle = color;
+  ctx.strokeStyle = color;
   ctx.beginPath();
   ctx.arc(x - camera.x, y - camera.y, r, 10, 80);
   ctx.fill();
@@ -350,7 +377,7 @@ var getVector = function(source, target) {
 document.onkeydown = document.onkeyup = function(e) {
   switch (e.which) {
     case 38: //up
-      ship.thrust = e.type === "keydown";
+      ship.thrusting = e.type === "keydown";
       break;
     case 37: //left
       ship.left = e.type === "keydown";
