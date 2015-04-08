@@ -7,6 +7,7 @@ var canvas = document.getElementById('canvas'),
   planets,
   stars,
   level = 1,
+  attempts,
   startTime;
 
 var PLANET_HOME_DISTANCE = 450,
@@ -37,6 +38,7 @@ var initialize = function() {
 
   if (!ship) {
     seed = level + EXTRA_SEED;
+    attempts = 1;
 
     ship = {
       x: canvas.width / 2,
@@ -239,6 +241,10 @@ var detectCollide = function() {
     ) {
       if (i === planets.length - 1) {
         levelUp();
+      } else {
+        attempts++;
+        typeof ga == 'function' && ga('send', 'event', 'game', 'died', 'level', level);
+        typeof ga == 'function' && ga('send', 'event', 'game', 'died', 'attempts', attempts);
       }
       return true;
     }
@@ -256,6 +262,8 @@ var levelUp = function() {
   if (PLANET_HOME_DISTANCE > PLANET_AREA / 2) {
     PLANET_HOME_DISTANCE = PLANET_AREA / 2;
   }
+  typeof ga == 'function' && ga('send', 'event', 'game', 'levelUp', 'level', level);
+  typeof ga == 'function' && ga('send', 'event', 'game', 'levelUp', 'attempts', attempts);
 }
 
 
