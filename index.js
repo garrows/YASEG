@@ -1,5 +1,6 @@
 var canvas = document.getElementById('canvas'),
   ctx = canvas.getContext('2d'),
+  seed,
   center,
   camera,
   ship,
@@ -8,7 +9,10 @@ var canvas = document.getElementById('canvas'),
   level = 1,
   startTime;
 
-var PLANET_COUNT = 200,
+var PLANET_HOME_DISTANCE = 450,
+  PLANET_HOME_DISTANCE_MULTIPLIER = 1.5,
+  PLANET_COUNT = 50,
+  PLANET_COUNT_MULTIPLIER = 1.2,
   PLANET_AREA = 10000,
   PLANET_SIZE = 80,
   // PLANET_BACKGROUND_SIZE = 50,
@@ -17,7 +21,8 @@ var PLANET_COUNT = 200,
   STAR_COUNT = 4000,
   STAR_SIZE = 1,
   MAX_VELOCITY_HUD = 30,
-  MAX_TARGET_DISTANCE_HUD = PLANET_AREA / 2;
+  MAX_TARGET_DISTANCE_HUD = PLANET_AREA / 2,
+  EXTRA_SEED = 3;
 
 var initialize = function() {
   canvas.setAttribute("width", window.innerWidth);
@@ -31,6 +36,7 @@ var initialize = function() {
   };
 
   if (!ship) {
+    seed = level + EXTRA_SEED;
 
     ship = {
       x: canvas.width / 2,
@@ -54,15 +60,24 @@ var initialize = function() {
 
     //Generate planets
     planets = Array(PLANET_COUNT);
-    for (var i = 0; i < planets.length; i++) {
-      var radius = Math.random() * PLANET_SIZE + 20;
+    for (var i = 0; i < planets.length - 1; i++) {
+      var radius = random() * PLANET_SIZE + 20;
       planets[i] = {
-        x: Math.random() * PLANET_AREA - PLANET_AREA / 2,
-        y: Math.random() * PLANET_AREA - PLANET_AREA / 2,
+        x: random() * PLANET_AREA - PLANET_AREA / 2,
+        y: random() * PLANET_AREA - PLANET_AREA / 2,
         r: radius,
         mass: radius * PLANET_DENSITY_COEFFICIENT,
-        home: i === planets.length - 1
+        home: false
       }
+    }
+    //Target planet
+    var angle = random() * Math.PI * 2;
+    planets[planets.length - 1] = {
+      x: ship.x + Math.sin(angle) * PLANET_HOME_DISTANCE,
+      y: ship.y - Math.cos(angle) * PLANET_HOME_DISTANCE,
+      r: PLANET_SIZE,
+      mass: PLANET_SIZE * PLANET_DENSITY_COEFFICIENT,
+      home: true
     }
 
     //Test planet
@@ -81,9 +96,9 @@ var initialize = function() {
     stars = Array(STAR_COUNT);
     for (var i = 0; i < stars.length; i++) {
       stars[i] = {
-        x: Math.random() * PLANET_AREA - PLANET_AREA / 2,
-        y: Math.random() * PLANET_AREA - PLANET_AREA / 2,
-        r: Math.random() * STAR_SIZE + 1
+        x: random() * PLANET_AREA - PLANET_AREA / 2,
+        y: random() * PLANET_AREA - PLANET_AREA / 2,
+        r: random() * STAR_SIZE + 1
       }
     }
   }
@@ -225,8 +240,13 @@ var detectCollide = function() {
 
 var levelUp = function() {
   level++;
-  PLANET_AREA = Math.floor(PLANET_AREA * 1.20);
-  PLANET_COUNT = Math.floor(PLANET_COUNT * 1.20);
+  // PLANET_AREA = Math.floor(PLANET_AREA * 1.50);
+  PLANET_COUNT = Math.floor(PLANET_COUNT * PLANET_COUNT_MULTIPLIER);
+  // STAR_COUNT = Math.floor(STAR_COUNT * 2);
+  PLANET_HOME_DISTANCE *= PLANET_HOME_DISTANCE_MULTIPLIER;
+  if (PLANET_HOME_DISTANCE > PLANET_AREA / 2) {
+    PLANET_HOME_DISTANCE = PLANET_AREA / 2;
+  }
 }
 
 
@@ -389,6 +409,12 @@ document.onkeydown = document.onkeyup = function(e) {
       ship.down = e.type === "keydown";
       break;
   }
+}
+
+//Bad seeded random number generator
+function random() {
+  var x = Math.sin(seed++) * 10000;
+  return x - Math.floor(x);
 }
 
 
