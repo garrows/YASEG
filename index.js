@@ -48,7 +48,8 @@ var initialize = function() {
       v: 0,
       thrust: 0.2,
       sidewaysThrust: 0.003,
-      mass: 100
+      mass: 100,
+      state: 'spawn'
     };
     ship.backHypotenuse = Math.sqrt(Math.pow(ship.h / 2, 2) + Math.pow(ship.w / 2, 2));
     ship.backAngle = Math.atan((ship.w / 2) / (ship.h / 2));
@@ -119,6 +120,14 @@ var updateShip = function(dt) {
   if (ship.r < 0) ship.r += Math.PI * 2;
   if (ship.d > Math.PI * 2) ship.d -= Math.PI * 2;
   if (ship.d < 0) ship.d += Math.PI * 2;
+
+  if (ship.state == 'spawn') {
+    if (ship.thrusting)
+      ship.state = 'playing';
+    else
+      return;
+  }
+
 
   var startPos = {
     x: ship.x,
@@ -350,22 +359,38 @@ var drawPlanet = function(x, y, r, color) {
 }
 
 var drawHud = function() {
-  var score = 'Time: ' + ((Date.now() - startTime) / 1000).toFixed(0),
-    levelString = 'Level: ' + level,
+  var levelString = 'Level: ' + level,
     x = 5,
     y = 20,
-    textHeight = 30,
     color = '#FF11FF';
 
-  ctx.font = '18px sans-serif'
-
-  ctx.strokeStyle = color;
-  ctx.fillStyle = color;
+  ctx.font = '18px sans-serif';
+  ctx.strokeStyle = ctx.fillStyle = color;
 
   ctx.strokeText(levelString, x, y);
   ctx.fillText(levelString, x, y);
-  ctx.strokeText(score, x, y + textHeight);
-  ctx.fillText(score, x, y + textHeight);
+
+  if (ship.state == 'spawn') {
+    ctx.font = '30px sans-serif';
+    var text = 'You wake up. You look at your blood soaked hands. No no no. Not again...\n';
+    x = center.x - ctx.measureText(text).width / 2;
+    y = center.y * .4;
+    ctx.strokeText(text, x, y);
+    ctx.fillText(text, x, y);
+    ctx.font = '20px sans-serif';
+    text = level == 1 ? 'Find your home planet. The green one. The green arrow shows the way. Avoid the red planets. ' : levelString;
+    y += 40;
+    x = center.x - ctx.measureText(text).width / 2;
+    ctx.strokeText(text, x, y);
+    ctx.fillText(text, x, y);
+    if (level == 1) {
+      text = 'Use the \u2190 and \u2192 keys to turn. The \u2191 to thrust.';
+      y += 40;
+      x = center.x - ctx.measureText(text).width / 2;
+      ctx.strokeText(text, x, y);
+      ctx.fillText(text, x, y);
+    }
+  }
 
   //Draw trajectory
   drawHudArrow(ship.d, ship.v, MAX_VELOCITY_HUD, '#faa');
