@@ -23,7 +23,12 @@ var PLANET_HOME_DISTANCE = 450,
   STAR_SIZE = 1,
   MAX_VELOCITY_HUD = 30,
   MAX_TARGET_DISTANCE_HUD = PLANET_AREA / 2,
-  EXTRA_SEED = 3;
+  EXTRA_SEED = 3,
+  HUD_TITLE = 'You wake up. You look at your blood soaked hands. No no no. Not again...\n',
+  HUD_INSTRUCTIONS = 'Find your home planet. The green one. The green arrow shows the way. Avoid the red planets.',
+  HUD_INSTRUCTIONS_CONTROLS = 'Use the \u2190 and \u2192 keys to turn. The \u2191 to thrust.',
+  HUD_FONTSIZE_TITLE = 30,
+  HUD_FONTSIZE_INSTRUCTIONS = 20;
 
 var initialize = function() {
   canvas.setAttribute("width", window.innerWidth);
@@ -366,37 +371,33 @@ var drawPlanet = function(x, y, r, color) {
   ctx.fill();
 }
 
+var drawText = function(text, fontSize, x, y, alignLeft) {
+  var textWidth;
+  ctx.strokeStyle = ctx.fillStyle = '#FF11FF';
+
+  do {
+    ctx.font = fontSize + 'px sans-serif';
+    textWidth = ctx.measureText(text).width;
+    fontSize--;
+  } while (textWidth > window.innerWidth * 0.9)
+
+  if (!alignLeft)
+    x = x - textWidth / 2;
+
+  ctx.strokeText(text, x, y);
+  ctx.fillText(text, x, y);
+  return fontSize + 1;
+};
+
 var drawHud = function() {
-  var levelString = 'Level: ' + level,
-    x = 5,
-    y = 20,
-    color = '#FF11FF';
-
-  ctx.font = '18px sans-serif';
-  ctx.strokeStyle = ctx.fillStyle = color;
-
-  ctx.strokeText(levelString, x, y);
-  ctx.fillText(levelString, x, y);
+  drawText('Level: ' + level, 18, 5, 20, true);
 
   if (ship.state == 'spawn') {
-    ctx.font = '30px sans-serif';
-    var text = 'You wake up. You look at your blood soaked hands. No no no. Not again...\n';
-    x = center.x - ctx.measureText(text).width / 2;
-    y = center.y * .4;
-    ctx.strokeText(text, x, y);
-    ctx.fillText(text, x, y);
-    ctx.font = '20px sans-serif';
-    text = level == 1 ? 'Find your home planet. The green one. The green arrow shows the way. Avoid the red planets. ' : levelString;
-    y += 40;
-    x = center.x - ctx.measureText(text).width / 2;
-    ctx.strokeText(text, x, y);
-    ctx.fillText(text, x, y);
+    drawText(HUD_TITLE, HUD_FONTSIZE_TITLE, center.x, center.y * 0.4, false);
+    var text = level == 1 ? HUD_INSTRUCTIONS : levelString;
+    var newInstructionFontSize = drawText(text, HUD_FONTSIZE_INSTRUCTIONS, center.x, center.y * 0.4 + 40, false);
     if (level == 1) {
-      text = 'Use the \u2190 and \u2192 keys to turn. The \u2191 to thrust.';
-      y += 40;
-      x = center.x - ctx.measureText(text).width / 2;
-      ctx.strokeText(text, x, y);
-      ctx.fillText(text, x, y);
+      drawText(HUD_INSTRUCTIONS_CONTROLS, newInstructionFontSize, center.x, center.y * 0.4 + 80, false);
     }
   }
 
