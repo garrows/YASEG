@@ -394,6 +394,7 @@ var drawHud = function() {
 
   if (ship.state == 'spawn') {
     drawText(HUD_TITLE, HUD_FONTSIZE_TITLE, center.x, center.y * 0.4, false);
+    var levelString = 'Level ' + level + '.';
     var text = level == 1 ? HUD_INSTRUCTIONS : levelString;
     var newInstructionFontSize = drawText(text, HUD_FONTSIZE_INSTRUCTIONS, center.x, center.y * 0.4 + 40, false);
     if (level == 1) {
